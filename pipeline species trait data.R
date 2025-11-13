@@ -3,8 +3,13 @@ library(stringr)
 library(tidyr)
 library(readr)
 
+#block for landis extension in flowchart for which extensions to include
+extension_vector <- c("Biomass_succession", "Output_biomass") #etc
+
+
+#retrieve species trait data
 #load and prepare TRY database for biomass succession
-TRY_biomass <- read.delim("C:/Users/sdfgh/Downloads/44262_02102025224030/44262.txt", fileEncoding = "latin1", dec = ".", quote = "", stringsAsFactors = FALSE)
+TRY_biomass <- read.delim("path\to\your\TRY_database.txt", fileEncoding = "latin1", dec = ".", quote = "", stringsAsFactors = FALSE)
 TRY_biomass <- TRY_biomass %>%
   select(-`X`) %>%
   mutate(
@@ -18,9 +23,30 @@ TRY_biomass <- TRY_biomass %>%
     )
   )
 
+#prepare data for Landis-II
+
+#function to easily min, mean or max a value for a tree trait in TRY    
+summarize_orig_value_by_species <- function(data, stat = c("min", "max", "mean"), name = "result") {
+  stat <- match.arg(stat)  # Validate input
+  name_sym <- sym(name)    # Convert name to symbol for tidy evaluation
+  
+  data %>%
+    group_by(SpeciesCode) %>%
+    summarize(
+      !!name_sym := case_when(
+        stat == "min"  ~ min(OrigValueStr, na.rm = TRUE),
+        stat == "max"  ~ max(OrigValueStr, na.rm = TRUE),
+        stat == "mean" ~ mean(OrigValueStr, na.rm = TRUE)
+      ),
+      .groups = "drop"
+    )
+}
+
+
 
 # ---- core species data ----
-
+#is needed for every succession extension
+    
 ##prepare TRY database for Landis parameter sexual maturity (traitID 155)
 TRY_155 <- TRY_biomass %>%
   filter(TraitID == 155) %>%
@@ -49,7 +75,6 @@ df_flower_age_missing <- tibble(
 
 # Combine both
 df_flower_age <- bind_rows(df_flower_age, df_flower_age_missing)
-
 
 ##prepare TRY database for Landis parameter plant longevity (traitID 59)
 TRY_59 <- TRY_biomass %>%
@@ -91,6 +116,7 @@ df_eff_seed_dist_missing <- tibble(
 
 #complete effective_seed_distance
 df_eff_seed_dist <- bind_rows(df_eff_seed_dist, df_eff_seed_dist_missing)
+
 
 #makes a column with maximum dispersal distance, TRY misses Querrubr, Betuspec, Fagusylv, Piceabie, Querspec and Larikaem
 df_max_seed_dist <- TRY_193 %>% 
@@ -171,7 +197,7 @@ df_max_resprout_age <- tibble(
 TRY_318.819 <- TRY_biomass %>%
   filter(TraitID %in% c(318, 819)) %>%
   mutate(
-    OrigValueStr = case_when( #resprout and serotiny are in different TRY traidID, serotiny takes priority over resprout over none
+    OrigValueStr = case_when( #resprout and serotiny are in different TRY traitID, serotiny takes priority over resprout over none
       TraitID == 318 & OriglName == "SeedlEmerg" & OrigValueStr %in% c("low", "yes") ~ "serotiny",
       TraitID == 819 & OrigValueStr %in% c("No", "no", "1") ~ "none", #TRY paper uses 1 for no
       TraitID == 819 & OrigValueStr %in% c("Yes", "yes", "0", "moderate", "70") ~ "resprout", #TRY paper uses 0 for yes
@@ -207,22 +233,20 @@ header <- c(
   "LandisData Species"
 )
 
-
-
+#part that should make the output to the next NaaVRE block
 output_lines <- c(header, core_species_data)
 
 writeLines(output_lines, "Core_species_data.txt")
-#block for landis extension in flowchart for which extensions to include
-extension_vector <- c("Biomass_succession", "Output_biomass") #etc
-
 
 # ---- SppEcoregionData for biomass succession ----
-if ("Biomass_succession" %in% extension_vector) {
-#also read in establishment values from Probos, Probos misses Querrubr
-establish <- read.csv("establishmentTreeVeluwe.csv", row.names = 1)
 
+#make an if loop, eventually this file should contain all the code for all species trait data that is required per 
+#succession extension. So the following code will only run in case biomass succession is the succession extension that is chosen
+if ("Biomass_succession" %in% extension_vector) {
+  
+#also read in establishment values from Probos, Probos misses Querrubr
 df_prob_establish <- read_csv("establishmentTreeVeluwe.csv") %>%
-  select(-1) %>%                          # Remove first column if it's row names
+  select(-1) %>%              # Remove first column if it's row names
   summarise(across(everything(), sum, na.rm = TRUE)) %>%
   pivot_longer(cols = everything(), names_to = "SpeciesCode", values_to = "ProbEstablish") %>%
   mutate(
@@ -251,15 +275,15 @@ mortality <- read.csv("probMortality_biomass.txt")
 #make dataframe for Probmortality
 df_prob_mortality <- mortality
 
-#prepare ANPPmax, comes from training algorythm
-Pseumenz_anpp_max <- ANPPmax_pseumenz 
-Larikaem_anpp_max <- ANPPmax_larikaem 
-Piceabie_anpp_max <- ANPPmax_piceabie 
-Pinusylv_anpp_max <- ANPPmax_pinusylv 
-Fagusylv_anpp_max <- ANPPmax_fagusylv 
-Querspec_anpp_max <- ANPPmax_querspec 
-Querrubr_anpp_max <- ANPPmax_querrubr 
-Betuspec_anpp_max <- ANPPmax_betuspec 
+#prepare ANPPmax, comes from training algorythm, but for now default values
+Pseumenz_anpp_max <- 7.12 #ANPPmax_pseumenz 
+Larikaem_anpp_max <- 7.12 #ANPPmax_larikaem 
+Piceabie_anpp_max <- 7.12 #ANPPmax_piceabie 
+Pinusylv_anpp_max <- 7.12 #ANPPmax_pinusylv 
+Fagusylv_anpp_max <- 11.3 #ANPPmax_fagusylv 
+Querspec_anpp_max <- 11.3 #ANPPmax_querspec 
+Querrubr_anpp_max <- 11.3 #ANPPmax_querrubr 
+Betuspec_anpp_max <- 11.3 #ANPPmax_betuspec 
 
 #make dataframe for ANPPmax
 df_anpp_max <- tibble(
@@ -270,15 +294,15 @@ df_anpp_max <- tibble(
               Fagusylv_anpp_max, Querspec_anpp_max, Querrubr_anpp_max, Betuspec_anpp_max)
 )
 
-#prepare BiomassMax, comes from training algorythm
-Pseumenz_biomass_max <- biomassMAX_pseumenz 
-Larikaem_biomass_max <- biomassMAX_larikaem
-Piceabie_biomass_max <- biomassMAX_piceabie
-Pinusylv_biomass_max <- biomassMAX_pinusylv
-Fagusylv_biomass_max <- biomassMAX_fagusylv
-Querspec_biomass_max <- biomassMAX_querspec
-Querrubr_biomass_max <- biomassMAX_querrubr
-Betuspec_biomass_max <- biomassMAX_betuspec
+#prepare BiomassMax, comes from training algorythm, but for now default values
+Pseumenz_biomass_max <- 26000 #biomassMAX_pseumenz 
+Larikaem_biomass_max <- 26000 #biomassMAX_larikaem
+Piceabie_biomass_max <- 26000 #biomassMAX_piceabie
+Pinusylv_biomass_max <- 26000 #biomassMAX_pinusylv
+Fagusylv_biomass_max <- 26000 #biomassMAX_fagusylv
+Querspec_biomass_max <- 26000 #biomassMAX_querspec
+Querrubr_biomass_max <- 26000 #biomassMAX_querrubr
+Betuspec_biomass_max <- 26000 #biomassMAX_betuspec
 
 #make dataframe for BiomassMax
 df_biomass_max <- tibble(
@@ -382,15 +406,15 @@ df_mortality_curve <- tibble(
                      Fagusylv_mortality_curve, Querspec_mortality_curve, Querrubr_mortality_curve, Betuspec_mortality_curve)
 )
 
-#prepare growthcurve, comes from training algorythm
-Pseumenz_growth_curve <- growthcurve_pseumenz
-Larikaem_growth_curve <- growthcurve_larikaem
-Piceabie_growth_curve <- growthcurve_piceabie
-Pinusylv_growth_curve <- growthcurve_pinusylv
-Fagusylv_growth_curve <- growthcurve_fagusylv
-Querspec_growth_curve <- growthcurve_querspec
-Querrubr_growth_curve <- growthcurve_querrubr
-Betuspec_growth_curve <- growthcurve_betuspec
+#prepare growthcurve, comes from training algorythm, but for now default values
+Pseumenz_growth_curve <- 0.9 #growthcurve_pseumenz
+Larikaem_growth_curve <- 0.9 #growthcurve_larikaem
+Piceabie_growth_curve <- 0.9 #growthcurve_piceabie
+Pinusylv_growth_curve <- 0.9 #growthcurve_pinusylv
+Fagusylv_growth_curve <- 0.9 #growthcurve_fagusylv
+Querspec_growth_curve <- 0.9 #growthcurve_querspec
+Querrubr_growth_curve <- 0.9 #growthcurve_querrubr
+Betuspec_growth_curve <- 0.9 #growthcurve_betuspec
 
 #make dataframe for growthcurve
 df_growth_curve <- tibble(
@@ -523,4 +547,5 @@ SpeciesData.biomass <- df_leaf_longevity %>%
 
 
 write_csv(SpeciesData.biomass, "SpeciesData.csv")
+
 }
