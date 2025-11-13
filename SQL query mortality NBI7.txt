@@ -1,3 +1,5 @@
+#sql query from NBI 7 database to find vitality of trees in the Veluwe, run in microsoft access NBI-7 database
+
 SELECT
     SWITCH (
         data_NBI7_plotmetingen.hoofdboomsoort = 'AE',
@@ -32,4 +34,5 @@ WHERE
     data_NBI7_plotdefinitie.selected = True
     AND data_NBI7_plotmetingen.hoofdboomsoort IN ('AE', 'BE', 'BU', 'DG', 'EI', 'FS', 'GD', 'JL')
 GROUP BY
+
     data_NBI7_plotmetingen.hoofdboomsoort;
