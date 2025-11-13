@@ -1,4 +1,4 @@
-#sql query from NBI 7 database to find vitality of trees in the Veluwe, run in microsoft access NBI-7 database
+#sql query from NBI 7 database to find vitality of trees in the Veluwe, run in microsoft access NBI-7 database, result of query is saved in probMortality_biomass.txt
 
 SELECT
     SWITCH (
