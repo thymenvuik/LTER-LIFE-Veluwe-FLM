@@ -1,4 +1,6 @@
-﻿,Fagusylv,Querspec,Betuspec,Pinusylv,Piceabie,Pseumenz,Larikaem
+#dataframe for the amount of rejuvenation in the Veluwe according to Probos research
+
+,Fagusylv,Querspec,Betuspec,Pinusylv,Piceabie,Pseumenz,Larikaem
 40-60,1.5,0.5,4.1,9.5,0.7,2.9,2.2
 60-80,1.1,0.2,3.3,7.2,0.4,2,1.6
 80-100,0.7,0.1,2.2,5.3,0.2,1.4,1.2
@@ -10,3 +12,4 @@
 >200,0.1,0,0.6,0.4,0,0.2,0.3
 ,,,,,,,
 ,4.7,0.8,13.9,31.8,1.6,8.9,8.2
+
