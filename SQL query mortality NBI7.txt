@@ -1,0 +1,35 @@
+SELECT
+    SWITCH (
+        data_NBI7_plotmetingen.hoofdboomsoort = 'AE',
+        'Querrubr',
+        data_NBI7_plotmetingen.hoofdboomsoort = 'BE',
+        'Betuspec',
+        data_NBI7_plotmetingen.hoofdboomsoort = 'BU',
+        'Fagusylv',
+        data_NBI7_plotmetingen.hoofdboomsoort = 'DG',
+        'Pseumenz',
+        data_NBI7_plotmetingen.hoofdboomsoort = 'EI',
+        'Querspec',
+        data_NBI7_plotmetingen.hoofdboomsoort = 'FS',
+        'Piceabie',
+        data_NBI7_plotmetingen.hoofdboomsoort = 'GD',
+        'Pinusylv',
+        data_NBI7_plotmetingen.hoofdboomsoort = 'JL',
+        'Larikaem'
+    ) AS SpeciesCode,
+    Format(
+        (
+            COUNT(
+                IIF(data_NBI7_plotmetingen.vitaliteit = 2, 1, NULL)
+            ) * 1.0 / COUNT(data_NBI7_plotmetingen.vitaliteit)
+        ) / 10,
+        "0.0000"
+    ) AS ProbMortality
+FROM
+    data_NBI7_plotmetingen
+    INNER JOIN data_NBI7_plotdefinitie ON data_NBI7_plotmetingen.plotnummer = data_NBI7_plotdefinitie.PLOT
+WHERE
+    data_NBI7_plotdefinitie.selected = True
+    AND data_NBI7_plotmetingen.hoofdboomsoort IN ('AE', 'BE', 'BU', 'DG', 'EI', 'FS', 'GD', 'JL')
+GROUP BY
+    data_NBI7_plotmetingen.hoofdboomsoort;
