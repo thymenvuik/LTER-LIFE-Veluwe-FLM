@@ -10,7 +10,7 @@ generate_scenario <- function(duration = 50, cellLength = 100,
   library(glue)
   library(purrr)
   
-  # Disturbance block (supports multiple or none)
+  # Disturbance block (supports multiple, one or none)
   disturbance_block <- ""
   if (!is.null(disturbance) && !is.null(disturbance_filename)) {
     disturbance_lines <- map2_chr(disturbance, disturbance_filename, ~ glue("    \"{.x}\" { .y }")) #makes sure disturbance and initialization file are both included
@@ -34,7 +34,7 @@ generate_scenario <- function(duration = 50, cellLength = 100,
 ")
   }
   
-  # Output block (supports multiple or none)
+  # Output block (supports multiple, one or none)
   output_block <- ""
   if (!is.null(output) && !is.null(output_filename)) {
     output_lines <- map2_chr(output, output_filename, ~ glue("      \"{.x}\"        {.y}")) #makes sure disturbance and initialization file are both included
@@ -91,6 +91,7 @@ CellLength      {cellLength} << meters, 100 x 100 m = 1 ha
   writeLines(text, filename) #export scenario
 }
 
+#example prompts
 generate_scenario(
   succession = "Biomass-succession",
   succession_filename = "Biomass.txt",
@@ -108,3 +109,4 @@ generate_scenario(
   output_filename = c("output-biomass.txt", "Community-output.txt", "Suitability-output.txt"),
   filename = "scenario.txt"
 )
+
