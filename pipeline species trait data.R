@@ -1,3 +1,5 @@
+#this script will return all species trait files that biomass succession requires. Currently only made for biomass succession.
+
 library(dplyr)
 library(stringr)
 library(tidyr)
@@ -333,7 +335,7 @@ TRY_12 <- TRY_biomass %>%
     OrigValueStr = str_extract(OrigValueStr, "\\d+\\.?\\d*"),
     OrigValueStr = as.numeric(OrigValueStr),
     
-    # Normalize OrigUnitStr to lowercase for easier matching
+    # Normalize OrigUnitStr to lowercase for easier case_when matching
     OrigUnitStr = str_to_lower(OrigUnitStr),
     
     # Apply unit conversion
@@ -344,7 +346,7 @@ TRY_12 <- TRY_biomass %>%
       TRUE ~ NA_real_  # Handle unexpected units
     ),
     
-    # Enforce minimum value of 1
+    # Enforce minimum value of 1, because deciduous trees in landis should have a value of 1
     OrigValueStr = if_else(OrigValueStr < 1, 1, OrigValueStr),
     
     # Standardize unit label
@@ -406,7 +408,7 @@ df_mortality_curve <- tibble(
                      Fagusylv_mortality_curve, Querspec_mortality_curve, Querrubr_mortality_curve, Betuspec_mortality_curve)
 )
 
-#prepare growthcurve, comes from training algorythm, but for now default values
+#prepare growthcurve, should come from training algorythm, but for now default values
 Pseumenz_growth_curve <- 0.9 #growthcurve_pseumenz
 Larikaem_growth_curve <- 0.9 #growthcurve_larikaem
 Piceabie_growth_curve <- 0.9 #growthcurve_piceabie
@@ -455,13 +457,13 @@ df_leaf_lignin <- bind_rows(df_leaf_lignin, df_leaf_lignin_missing)  %>%
 #prepare TRY database for Landis parameter shade tolerance (traitID 603)
 TRY_603 <- TRY_biomass %>%
   filter(TraitID == 603) %>%
-  # Step 1: Remove rows with "%" in OrigUnitStr
+  # Remove rows with "%" in OrigUnitStr
   filter(!str_detect(OrigUnitStr, "%")) %>%
   
-  # Step 2: Normalize OrigValueStr to lowercase
+  # Normalize OrigValueStr to lowercase for easier case_when usage
   mutate(OrigValueStr = str_to_lower(OrigValueStr)) %>%
   
-  # Step 3: Map textual values to numeric scale
+  # Map textual values to numeric scale
   mutate(
     OrigValueStr = case_when(
       OrigValueStr %in% c("intolerant") ~ 1,
@@ -484,10 +486,10 @@ TRY_603 <- TRY_biomass %>%
     )
   ) %>%
   
-  # Step 4: Remove rows with NA values after transformation
+  # Remove rows with NA values after transformation
   filter(!is.na(OrigValueStr)) %>%
   
-  # Step 5: Standardize OrigUnitStr label
+  # Standardize OrigUnitStr label
   mutate(OrigUnitStr = "tolerance_score")
 
 
@@ -502,7 +504,7 @@ TRY_318 <- TRY_biomass %>%
   # Step 2: Normalize OrigUnitStr to lowercase
   mutate(OrigValueStr = str_to_lower(OrigValueStr)) %>%
   
-  # Step 3: Map textual values to numeric scale
+  # Map textual values to numeric scale
   mutate(
     OrigValueStr = case_when(
       OrigValueStr %in% c("no", "none") ~ 1,
@@ -512,10 +514,10 @@ TRY_318 <- TRY_biomass %>%
     )
   ) %>%
   
-  # Step 4: Remove rows with NA values after transformation
+  # Remove rows with NA values after transformation
   filter(!is.na(OrigValueStr)) %>%
   
-  # Step 5: Standardize OrigUnitStr label
+  # Standardize OrigUnitStr label
   mutate(OrigUnitStr = "tolerance_score")
 
 
@@ -549,3 +551,4 @@ SpeciesData.biomass <- df_leaf_longevity %>%
 write_csv(SpeciesData.biomass, "SpeciesData.csv")
 
 }
+
